@@ -18,5 +18,6 @@ chmod 600 task1.pem
 echo "Execute the cloudformation script"
 aws cloudformation create-stack --stack-name task1 --template-body file://deployindex.yml --parameters ParameterKey=KeyName,ParameterValue=task1 ParameterKey=SSHLocation,ParameterValue=0.0.0.0/0> /dev/null 2>&1
 
-echo "Testing the site going to: "
-aws cloudformation describe-stacks --stack-name task1 --query "Stacks[0].Outputs[?OutputKey=='PublicIP'].OutputValue" --output text>PublicIP
+echo "Waiting for the creation of resources 5 minutes"
+sleep 5m
+aws cloudformation describe-stacks --stack-name task1 --query "Stacks[0].Outputs[?OutputKey=='PublicIP'].OutputValue" --output text > PublicIP
