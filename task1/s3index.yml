@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template creates a s3 bucket with the desired name and publicread permissions
+Parameters:
+  Projectname:
+    Description: Name of the project
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+#      AccessControl: PublicRead
+      BucketName: 
+        !Sub '${Projectname}'
+      VersioningConfiguration: 
+        Status: Enabled
+      Tags: 
+        - Key: Name
+          Value: !Ref Projectname
+        - Key: owner
+          Value: jorge.herran
+        - Key: project
+          Value: !Ref Projectname
+        - Key: Provisioner
+          Value: Cloudformation
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: 
+        !Ref 'S3Bucket'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref 'S3Bucket', /*]]
+          - Sid: PutObjectAccess
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:PutObject'
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref 'S3Bucket', /*]]
+
+Outputs:
+  webbucket:
+    Value: !GetAtt [S3Bucket, WebsiteURL]
+    Description: URL for website hosted on S3
