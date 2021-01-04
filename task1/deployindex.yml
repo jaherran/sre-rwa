@@ -1,11 +1,20 @@
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template to deploy an EC2 Instance with apache and site deployed 
+Description: Template to deploy an EC2 Instance with apache and site deployed from git raw file
 Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
 
 Resources:
 #This template launch an instance with docker, docker compose and code deploy agent installed
@@ -19,8 +28,8 @@ Resources:
       InstanceType: t2.micro
       KeyName: !Ref KeyName
       SecurityGroups:
-        - !Ref webSecurityGroup
-    Tags:
+        - !Ref WebSecurityGroup
+      Tags:
         - Key: Name
           Value: Deployhtml
         - Key: owner
@@ -34,10 +43,11 @@ Resources:
          Fn::Base64: |
            #!/bin/bash -ex
            yum update -y
-           yum install -y httpd
+           yum install -y httpd curl
            service httpd start
            chkconfig httpd on
-           
+           cd /var/www/html/
+           curl -LJO 'https://raw.githubusercontent.com/jaherran/sre-rwa/master/task1/index.html'>index.html
 
   WebSecurityGroup:
     # http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
@@ -52,4 +62,14 @@ Resources:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
-        CidrIp: 192.168.1.1/32
+        CidrIp: !Ref SSHLocation
+
+Outputs:
+  WebServerId:
+    Description: The instance ID of the web server
+    Value:
+      Ref: Webserver
+  PublicIP:
+    Description: Public IP address of the web server
+    Value:
+      !GetAtt Webserver.PublicIp
